@@ -1,7 +1,8 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { getRefreshToken } from '~/lib/spotify';
+import { useSpotify } from '~/context/spotify';
+import { AUTHORIZATION_ENDPOINT, getRefreshToken } from '~/lib/spotify';
 
 export const meta: MetaFunction = () => ({
   refresh: {
@@ -13,28 +14,36 @@ export const meta: MetaFunction = () => ({
 export const loader: LoaderFunction = async ({ request }) => {
   const code = new URL(request.url).searchParams.get('code');
   const refreshToken = code ? await getRefreshToken(code) : null;
-  return json({ client_id: process.env.SPOTIFY_CLIENT_ID!, refreshToken });
+  if (refreshToken) {
+    const accessToken = refreshToken.access_token;
+    if (accessToken) {
+      return json({
+        // recentTracks: res,
+        authorizationEndpoint: AUTHORIZATION_ENDPOINT,
+        refreshToken,
+      });
+    }
+  }
+
+  return json({
+    // recentTracks: res,
+    authorizationEndpoint: AUTHORIZATION_ENDPOINT,
+    refreshToken,
+  });
 };
 
 export default function Index() {
-  const { client_id, refreshToken } = useLoaderData();
-  console.log(refreshToken);
-
+  const { authorizationEndpoint, refreshToken, recentTracks } = useLoaderData();
+  console.log(recentTracks);
   return (
-    <div className="h-screen bg-gray-50">
-      <div className="">
+    <div className="h-screen bg-[#2B2D42]">
+      <div className="w-1/2 flex justify-center">
         <a
-          href={`https://accounts.spotify.com/authorize?client_id=${client_id}&show_dialog=true&response_type=code&redirect_uri=http%3A%2F%2Flocalhost:3000&scope=user-read-currently-playing%20user-top-read`}
-          className="bg-black text-white p-3 rounded-lg"
+          href={authorizationEndpoint}
+          className="bg-[#EDF2F4] text-gray-800 p-3 rounded-lg"
         >
           Login
         </a>
-        {refreshToken.refresh_token && (
-          <div>
-            <h1>Refresh Token:</h1>
-            <code>{refreshToken.refresh_token}</code>
-          </div>
-        )}
       </div>
     </div>
   );

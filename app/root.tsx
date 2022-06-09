@@ -7,6 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from '@remix-run/react';
+import { SpotifyProvider } from './context/spotify';
 import styles from './styles/app.css';
 
 export function links() {
@@ -27,7 +28,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <SpotifyProvider>
+          <Outlet />
+        </SpotifyProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
